@@ -1,0 +1,1984 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#e8720c">
+<title>RFID Asset Control · CONST-WMS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#e8720c;--orange2:#c2570a;--orange-grad:linear-gradient(135deg,#f0872a,#e8720c);
+  --bg:#f4f2ee;--card:#ffffff;--ink:#1f2937;--sub:#6b7280;--sub2:#9ca3af;
+  --line:#e7e1d6;--line2:#efeae1;--soft:#faf8f4;
+  --ok:#22c55e;--okbg:#eafaf0;--danger:#ef4444;--warn:#f59e0b;--info:#0ea5e9;
+  --shadow:0 2px 12px rgba(30,30,20,.06);--shadow2:0 8px 30px rgba(30,30,20,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;overscroll-behavior:none}
+input,textarea,select{font-family:inherit}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+.app{max-width:520px;margin:0 auto;min-height:100vh;position:relative;background:var(--bg);display:flex;flex-direction:column}
+
+/* ── Top bar ── */
+.top{position:sticky;top:0;z-index:40;background:#241f18;
+  padding:calc(env(safe-area-inset-top) + 12px) 14px 12px;display:flex;align-items:center;gap:9px}
+.top .logo{width:34px;height:34px;border-radius:10px;background:#000;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.top .tt{flex:1;min-width:0;overflow:hidden}
+.top .tt b{font-size:15px;font-weight:800;display:block;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.top .tt span{font-size:11px;color:rgba(255,255,255,.55);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topsync{width:32px;height:32px;border-radius:9px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.topsync:active{transform:scale(.92)}
+.lang{display:flex;gap:2px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:2px;flex:0 0 auto}
+.lang button{padding:5px 9px;border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:800;color:rgba(255,255,255,.6)}
+.lang button.on{background:var(--orange);color:#fff}
+.syncnote{background:#eafaf0;color:#16a34a;font-size:11.5px;font-weight:700;padding:7px 16px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #d6f0e0}
+.syncnote i{width:6px;height:6px;border-radius:50%;background:#22c55e;display:block}
+
+/* ── Screen area ── */
+main{flex:1;min-height:0;overflow-y:auto;position:relative}
+.screen{padding:16px 16px 96px;animation:fade .2s}
+.scan-main{flex:1;min-height:0;overflow:hidden;background:#15120e;color:#fff;display:flex;flex-direction:column;padding-bottom:90px}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.h1{font-size:22px;font-weight:900;margin-bottom:2px}
+.sub{font-size:13px;color:var(--sub);margin-bottom:16px}
+.sec-t{font-size:12px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin:20px 4px 10px}
+.backbtn{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:700;color:var(--orange);margin-bottom:10px;padding:0}
+
+/* ── Cards / rows ── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line2);width:100%;text-align:left}
+.row:last-child{border-bottom:none}
+.row .rt,.more-row .rt{flex:1;min-width:0}
+.row .rt b,.more-row .rt b{font-size:14.5px;font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .rt small,.more-row .rt small{font-size:12px;color:var(--sub);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thumb{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:13px;font-weight:900}
+.thumb.ph{background:var(--soft);border:1px dashed #e0d8c8;color:#c9bfae}
+.thumb.tint-ok{background:rgba(74,222,128,.16);color:#4ade80}
+.thumb.tint-info{background:rgba(56,189,248,.16);color:#38bdf8}
+
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;flex:0 0 auto}
+.pill i{width:6px;height:6px;border-radius:50%;background:currentColor;display:block}
+.pill.ok{background:var(--okbg);color:#16a34a}
+.pill.warn{background:#fff7ed;color:#c2570a}
+.pill.info{background:#e0f2fe;color:#0284c7}
+.pill.ng{background:#f3f4f6;color:#6b7280}
+.pill.danger{background:#fee2e2;color:#dc2626}
+
+.progress{height:8px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:10px}
+.progress i{display:block;height:100%;background:var(--orange-grad);border-radius:6px}
+
+/* ── Hero ── */
+.hero{margin:-16px -16px 0;padding:16px 18px 24px;background:linear-gradient(160deg,#241f18 0%,#332a20 55%,#4a3a28 100%);border-radius:0 0 26px 26px;color:#fff;position:relative;box-shadow:0 6px 20px rgba(30,20,10,.18)}
+.hero-date{position:absolute;top:16px;right:18px;font-size:11.5px;color:rgba(255,255,255,.5);text-align:right;line-height:1.5;font-weight:600}
+.hero-greet{font-size:14px;font-weight:700;display:inline-block;background:linear-gradient(90deg,rgba(255,255,255,.4) 0%,#f6c177 45%,#ffe6c0 55%,rgba(255,255,255,.4) 100%);background-size:220% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:shimmer 3.2s linear infinite}
+@keyframes shimmer{0%{background-position:120% center}100%{background-position:-120% center}}
+.hero-name{font-size:25px;font-weight:900;color:#fff;margin-top:3px;line-height:1.15}
+.hero-name span{font-size:13px;font-weight:600;color:rgba(255,255,255,.45)}
+.hero-stats{display:flex;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.11);border-radius:18px;margin-top:18px;overflow:hidden}
+.hstat{flex:1;text-align:center;padding:15px 4px}
+.hstat+.hstat{border-left:1px solid rgba(255,255,255,.08)}
+.hstat .hv{font-size:23px;font-weight:900;color:#fff;line-height:1}
+.hstat .hv.warn{color:#f5a623}
+.hstat .hl{font-size:11px;color:rgba(255,255,255,.6);margin-top:5px}
+
+.qa{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px}
+.qa button{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:7px;box-shadow:var(--shadow)}
+.qa button span{font-size:12px;font-weight:700;text-align:center;line-height:1.2}
+.qa button:active{transform:scale(.96)}
+
+.inp{width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:15px;line-height:1.5;background:var(--card);color:var(--ink);outline:none}
+.inp:focus{border-color:var(--orange)}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin-bottom:6px}
+.btn{width:100%;padding:15px;border-radius:14px;font-size:16px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--orange-grad);color:#fff;box-shadow:0 6px 18px rgba(232,114,12,.3)}
+.btn.ghost{background:var(--soft);color:var(--ink);border:1.5px solid var(--line)}
+.btn.ok{background:linear-gradient(135deg,#4ade80,#22c55e);color:#fff}
+
+.search{position:relative;margin-bottom:12px}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%)}
+.search input{padding-left:42px}
+.empty{text-align:center;color:var(--sub);padding:40px 20px;font-size:14px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px}
+.chips button{white-space:nowrap;padding:7px 15px;border-radius:20px;background:var(--card);border:1.5px solid var(--line);font-size:13px;font-weight:700;color:var(--sub)}
+.chips button.on{background:var(--orange);color:#fff;border-color:var(--orange)}
+
+/* ── Detail ── */
+.photo-ph{height:168px;border-radius:14px 14px 0 0;background:var(--soft);border-bottom:1px solid var(--line2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#c9bfae}
+.photo-ph.sm{height:140px;border-radius:14px;border-bottom:none;margin-bottom:16px}
+.photo-ph span{font-size:11.5px;font-weight:700}
+.rfid-epc{margin-top:14px;padding:12px 14px;border-radius:14px;background:#241f18;color:#fff}
+.rfid-epc .lbl{font-size:10.5px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.6px}
+.rfid-epc .val{font-family:'JetBrains Mono',monospace;font-size:13.5px;font-weight:700;color:#f6c177;margin-top:5px;word-break:break-all}
+.rfid-rssi{display:flex;align-items:center;gap:8px;margin-top:10px}
+.rfid-rssi .track{flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden}
+.rfid-rssi .track i{display:block;height:100%;background:#22c55e}
+.rfid-rssi .val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:rgba(255,255,255,.7)}
+.rfid-qr{font-size:11px;color:rgba(255,255,255,.45);margin-top:6px}
+.rfid-meta{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line2);border:1px solid var(--line2);border-radius:14px;overflow:hidden;margin-top:14px}
+.rfid-meta div{background:var(--card);padding:12px 13px}
+.rfid-meta .k{font-size:10.5px;font-weight:700;color:var(--sub2);text-transform:uppercase;letter-spacing:.5px}
+.rfid-meta .v{font-size:13.5px;font-weight:700;margin-top:4px;color:var(--ink)}
+.rfid-timeline{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:4px 16px}
+.rfid-tl-row{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line2)}
+.rfid-tl-row:last-child{border-bottom:none}
+.rfid-tl-date{flex:0 0 auto;width:40px;text-align:center}
+.rfid-tl-date b{font-size:14px;font-weight:900;display:block}
+.rfid-tl-date span{font-size:10px;font-weight:600;color:var(--sub2)}
+.rfid-tl-bar{width:2px;background:var(--line2);flex:0 0 auto;border-radius:2px}
+.rfid-tl-body b{font-size:13.5px;font-weight:700;display:block}
+.rfid-tl-body small{font-size:12px;color:var(--sub)}
+.rfid-actions{margin-top:16px;display:flex;gap:10px}
+.rfid-actions .btn.ghost{flex:0 0 auto;width:auto;padding:14px 16px}
+
+/* ── Audit ── */
+.rfid-seg{display:flex;gap:6px;background:var(--line2);padding:4px;border-radius:14px;margin-bottom:14px}
+.rfid-seg button{flex:1;padding:9px 4px;border-radius:11px;font-size:12px;font-weight:800;color:var(--sub)}
+.rfid-seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.footnote{font-size:11.5px;line-height:1.6;color:var(--sub2);text-align:center;margin:10px 4px 0}
+
+/* ── Register ── */
+.reg-bars{display:flex;gap:6px;margin-bottom:18px}
+.reg-bars i{flex:1;height:5px;border-radius:4px;background:var(--line);display:block}
+.reg-bars i.on{background:var(--orange)}
+.write-box{background:#241f18;border-radius:18px;padding:22px 18px;color:#fff;text-align:center}
+.write-ic{width:96px;height:96px;margin:0 auto;border-radius:50%;background:rgba(232,114,12,.16);display:flex;align-items:center;justify-content:center;position:relative}
+.write-ic .ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(232,114,12,.45);animation:ping 1.3s ease-out infinite}
+@keyframes ping{0%{transform:scale(.4);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+.write-t{font-size:17px;font-weight:800;margin-top:16px}
+.write-s{font-size:12.5px;line-height:1.6;color:rgba(255,255,255,.55);margin-top:6px}
+.write-epc{margin-top:18px;padding:12px;border-radius:12px;background:rgba(255,255,255,.07);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#f6c177;word-break:break-all}
+.done-box{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px 18px;text-align:center}
+.done-ic{width:64px;height:64px;margin:0 auto;border-radius:50%;background:var(--okbg);display:flex;align-items:center;justify-content:center}
+.done-t{font-size:18px;font-weight:900;margin-top:14px}
+.done-s{font-size:13px;line-height:1.6;color:var(--sub);margin-top:5px}
+.locscan{width:46px;flex:0 0 auto;border-radius:12px;background:var(--orange-grad);color:#fff;display:flex;align-items:center;justify-content:center;border:none}
+
+/* ── Scan ── */
+.scan-top{padding:14px 18px 0;display:flex;align-items:center;gap:10px}
+.scan-top .exit{color:rgba(255,255,255,.7);font-size:14px;font-weight:700;padding:0}
+.scan-top .mid{flex:1;text-align:center}
+.scan-top .mid b{font-size:13.5px;font-weight:800;display:block}
+.scan-top .mid span{font-size:11px;color:rgba(255,255,255,.45)}
+.scan-top .badge{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;background:rgba(232,114,12,.18);color:#f0872a;white-space:nowrap}
+.scan-hero{padding:16px 18px 6px;flex:0 0 auto}
+.scan-hero-top{display:flex;align-items:flex-end;gap:10px}
+.scan-hero-count{font-size:52px;font-weight:900;line-height:1;color:#fff}
+.scan-hero-lbl{padding-bottom:6px}
+.scan-hero-lbl b{font-size:13px;font-weight:700;color:rgba(255,255,255,.75);display:block}
+.scan-hero-lbl span{font-size:11.5px;font-weight:600;color:rgba(255,255,255,.4)}
+.scan-progress{height:10px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:14px}
+.scan-progress i{display:block;height:100%;background:var(--orange-grad)}
+.scan-kpis{display:flex;gap:8px;margin-top:14px}
+.scan-kpi{flex:1;border-radius:14px;padding:10px 12px}
+.scan-kpi .v{font-size:20px;font-weight:900}
+.scan-kpi .l{font-size:11px;font-weight:600;color:rgba(255,255,255,.55)}
+.scan-list{flex:1;min-height:0;overflow-y:auto;padding:14px 18px 4px}
+.scan-list-t{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.stream-card{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);margin-bottom:8px;animation:blip .5s ease both}
+@keyframes blip{0%{opacity:0;transform:scale(.6)}30%{opacity:1;transform:scale(1)}100%{opacity:.25;transform:scale(1)}}
+.stream-card .stt{flex:1;min-width:0}
+.stream-card .stt b{font-size:13.5px;font-weight:700;display:block;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stream-card .stt small{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:rgba(255,255,255,.4)}
+.stream-empty{text-align:center;padding:26px 16px;font-size:13px;line-height:1.7;color:rgba(255,255,255,.4);white-space:pre-line}
+.scan-foot{flex:0 0 auto;padding:10px 18px 22px;display:flex;align-items:center;gap:16px}
+.scan-clear{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.7);font-size:11px;font-weight:700;flex:0 0 auto}
+.scan-trigger{flex:1;height:64px;border-radius:32px;border:none;background:var(--orange-grad);color:#fff;font-size:15px;font-weight:900;box-shadow:0 8px 22px rgba(232,114,12,.45);display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .1s}
+.scan-trigger.holding{transform:scale(.97)}
+.scan-summary{width:52px;height:52px;border-radius:50%;background:#22c55e;border:none;color:#fff;font-size:11px;font-weight:800;box-shadow:0 6px 16px rgba(34,197,94,.35);flex:0 0 auto}
+
+/* ── More ── */
+.more-row{width:100%;text-align:left;display:flex;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid var(--line2)}
+.more-row:last-child{border-bottom:none}
+.more-ic{width:36px;height:36px;border-radius:11px;background:rgba(232,114,12,.12);display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:14px;font-weight:900;color:var(--orange)}
+.more-arrow{color:var(--sub2);font-weight:800}
+.conn-box{margin-top:14px;padding:14px 16px;border-radius:16px;background:#fff7ed;border:1px solid #f6d9b8}
+.conn-box .t{font-size:13px;font-weight:800;color:var(--orange2)}
+.conn-box .b{font-size:12.5px;color:#8a6240;margin-top:4px;white-space:pre-line;line-height:1.6}
+
+/* ── Nav / sheet / toast ── */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;z-index:45;
+  background:var(--card);border-top:1px solid var(--line);
+  display:flex;justify-content:space-around;align-items:flex-end;
+  padding:8px 8px calc(env(safe-area-inset-bottom) + 8px);box-shadow:0 -4px 20px rgba(0,0,0,.05)}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--sub2);font-size:10px;font-weight:600;padding:4px 0}
+.nav button.on{color:var(--orange)}
+.nav .glyph{font-size:19px;line-height:1}
+.nav .scanbtn{flex:0 0 auto;margin-top:-34px;padding:0}
+.nav .scanbtn .circle{width:68px;height:68px;border-radius:50%;background:var(--orange-grad);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  box-shadow:0 8px 22px rgba(232,114,12,.45);border:4px solid var(--card)}
+.nav .scanbtn .circle span{font-size:9px;font-weight:800;color:#fff}
+
+.sheet-ov{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;animation:fade .2s}
+.sheet{position:relative;width:100%;max-width:520px;margin:0 auto;background:var(--card);border-radius:24px 24px 0 0;padding:10px 20px calc(env(safe-area-inset-bottom) + 22px);max-height:88vh;overflow:auto;animation:up .25s}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.sheet .grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:6px auto 16px;display:block}
+.sheet .sh-h{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.sheet .sh-h .thumb{width:52px;height:52px}
+.sheet .sh-h b{font-size:16px;font-weight:800;display:block}
+.sheet .sh-h small{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--sub)}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;align-items:center;gap:14px;padding:14px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);width:100%;text-align:left}
+.opt:active{background:var(--soft)}
+.opt .oi{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:16px;font-weight:900;color:#fff}
+.opt b{font-size:14.5px;font-weight:800;display:block}
+.opt small{font-size:12px;color:var(--sub)}
+
+.toast{position:fixed;bottom:104px;left:50%;transform:translateX(-50%);z-index:200;background:#1f2937;color:#fff;padding:11px 18px;border-radius:12px;font-size:13.5px;font-weight:700;box-shadow:var(--shadow2);max-width:86%;text-align:center;animation:fade .2s}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="vendor/react.production.min.js"></script>
+<script src="vendor/react-dom.production.min.js"></script>
+
+<script>
+const {
+  useState,
+  useEffect,
+  useRef
+} = React;
+const ASSETS = [{
+  id: 1,
+  code: "IT-1042",
+  cat: 1,
+  name: {
+    th: "MacBook Pro 14 — ฝ่ายบัญชี",
+    en: "MacBook Pro 14 — Accounting"
+  },
+  epc: "3034 F4E9 8A21 0C4B 7710 42",
+  status: "ok",
+  home: "HQ-3F",
+  room: {
+    th: "ห้อง 302",
+    en: "Room 302"
+  },
+  lastSeen: {
+    th: "วันนี้ 09:14",
+    en: "Today 09:14"
+  },
+  rssi: -46,
+  qr: "QR-IT1042"
+}, {
+  id: 2,
+  code: "IT-1043",
+  cat: 1,
+  name: {
+    th: "จอมอนิเตอร์ Dell U2723QE",
+    en: "Dell U2723QE monitor"
+  },
+  epc: "3034 F4E9 8A21 0C4B 7710 43",
+  status: "ok",
+  home: "HQ-3F",
+  room: {
+    th: "ห้อง 302",
+    en: "Room 302"
+  },
+  lastSeen: {
+    th: "วันนี้ 09:14",
+    en: "Today 09:14"
+  },
+  rssi: -51,
+  qr: "QR-IT1043"
+}, {
+  id: 3,
+  code: "FA-0921",
+  cat: 1,
+  name: {
+    th: "โปรเจกเตอร์ Epson EB-L200",
+    en: "Epson EB-L200 projector"
+  },
+  epc: "3034 F4E9 8A21 0C4B 77A1 C4",
+  status: "checked",
+  home: "HQ-3F",
+  room: {
+    th: "ห้อง 301",
+    en: "Room 301"
+  },
+  lastSeen: {
+    th: "เมื่อวาน 16:40",
+    en: "Yesterday 16:40"
+  },
+  rssi: -58,
+  qr: "QR-FA0921"
+}, {
+  id: 4,
+  code: "FN-2201",
+  cat: 2,
+  name: {
+    th: "โต๊ะทำงานปรับระดับ",
+    en: "Height-adjustable desk"
+  },
+  epc: "3034 F4E9 8A21 0C4B 8822 01",
+  status: "ok",
+  home: "HQ-3F",
+  room: {
+    th: "ห้อง 302",
+    en: "Room 302"
+  },
+  lastSeen: {
+    th: "วันนี้ 09:15",
+    en: "Today 09:15"
+  },
+  rssi: -49,
+  qr: "QR-FN2201"
+}, {
+  id: 5,
+  code: "FN-2202",
+  cat: 2,
+  name: {
+    th: "เก้าอี้ Ergo (ชุด 6 ตัว)",
+    en: "Ergo chairs (set of 6)"
+  },
+  epc: "3034 F4E9 8A21 0C4B 8822 02",
+  status: "ok",
+  home: "HQ-3F",
+  room: {
+    th: "ห้อง 301",
+    en: "Room 301"
+  },
+  lastSeen: {
+    th: "วันนี้ 09:16",
+    en: "Today 09:16"
+  },
+  rssi: -55,
+  qr: "QR-FN2202"
+}, {
+  id: 6,
+  code: "IT-1055",
+  cat: 1,
+  name: {
+    th: "NAS-01 Synology DS1821",
+    en: "NAS-01 Synology DS1821"
+  },
+  epc: "3034 F4E9 8A21 0C4B 7710 55",
+  status: "missing",
+  home: "HQ-3F",
+  room: {
+    th: "ห้อง 303",
+    en: "Room 303"
+  },
+  lastSeen: {
+    th: "12 ก.ย. 17:02",
+    en: "12 Sep 17:02"
+  },
+  rssi: -72,
+  qr: "QR-IT1055"
+}, {
+  id: 7,
+  code: "IT-1061",
+  cat: 1,
+  name: {
+    th: "สวิตช์ Cisco C9200 #4",
+    en: "Cisco C9200 switch #4"
+  },
+  epc: "3034 F4E9 8A21 0C4B 7710 61",
+  status: "ok",
+  home: "HQ-3F",
+  room: {
+    th: "ห้อง 303",
+    en: "Room 303"
+  },
+  lastSeen: {
+    th: "วันนี้ 09:18",
+    en: "Today 09:18"
+  },
+  rssi: -44,
+  qr: "QR-IT1061"
+}, {
+  id: 8,
+  code: "IT-1062",
+  cat: 1,
+  name: {
+    th: "เครื่องสำรองไฟ APC SRT3000",
+    en: "APC SRT3000 UPS"
+  },
+  epc: "3034 F4E9 8A21 0C4B 7710 62",
+  status: "maint",
+  home: "HQ-3F",
+  room: {
+    th: "ห้อง 303",
+    en: "Room 303"
+  },
+  lastSeen: {
+    th: "วันนี้ 09:18",
+    en: "Today 09:18"
+  },
+  rssi: -47,
+  qr: "QR-IT1062"
+}, {
+  id: 9,
+  code: "FN-2210",
+  cat: 2,
+  name: {
+    th: "ตู้เอกสาร 4 ลิ้นชัก",
+    en: "4-drawer filing cabinet"
+  },
+  epc: "3034 F4E9 8A21 0C4B 8822 10",
+  status: "ok",
+  home: "HQ-3F",
+  room: {
+    th: "ห้อง 304",
+    en: "Room 304"
+  },
+  lastSeen: {
+    th: "วันนี้ 09:21",
+    en: "Today 09:21"
+  },
+  rssi: -61,
+  qr: "QR-FN2210"
+}, {
+  id: 10,
+  code: "TL-3301",
+  cat: 4,
+  name: {
+    th: "ชุดประแจทอร์ค Snap-on",
+    en: "Snap-on torque wrench set"
+  },
+  epc: "3034 F4E9 8A21 0C4B 9933 01",
+  status: "ok",
+  home: "HQ-3F",
+  room: {
+    th: "ห้อง 304",
+    en: "Room 304"
+  },
+  lastSeen: {
+    th: "วันนี้ 09:22",
+    en: "Today 09:22"
+  },
+  rssi: -53,
+  qr: "QR-TL3301"
+}, {
+  id: 11,
+  code: "IT-1070",
+  cat: 1,
+  name: {
+    th: "iPad Pro 12.9 (ยืมใช้งาน)",
+    en: "iPad Pro 12.9 (on loan)"
+  },
+  epc: "3034 F4E9 8A21 0C4B 7710 70",
+  status: "missing",
+  home: "HQ-3F",
+  room: {
+    th: "ห้อง 302",
+    en: "Room 302"
+  },
+  lastSeen: {
+    th: "08 ก.ย. 11:30",
+    en: "08 Sep 11:30"
+  },
+  rssi: -78,
+  qr: "QR-IT1070"
+}, {
+  id: 12,
+  code: "FN-2215",
+  cat: 2,
+  name: {
+    th: "ไวท์บอร์ดเคลื่อนที่",
+    en: "Mobile whiteboard"
+  },
+  epc: "3034 F4E9 8A21 0C4B 8822 15",
+  status: "missing",
+  home: "HQ-3F",
+  room: {
+    th: "โถงลิฟต์",
+    en: "Lift lobby"
+  },
+  lastSeen: {
+    th: "05 ก.ย. 09:05",
+    en: "05 Sep 09:05"
+  },
+  rssi: -80,
+  qr: "QR-FN2215"
+}, {
+  id: 13,
+  code: "MC-5010",
+  cat: 3,
+  name: {
+    th: "เครื่องปั๊มไฮดรอลิก HP-3",
+    en: "Hydraulic press HP-3"
+  },
+  epc: "3034 F4E9 8A21 0C4B AA50 10",
+  status: "maint",
+  home: "PL2-A",
+  room: {
+    th: "สถานี 3",
+    en: "Station 3"
+  },
+  lastSeen: {
+    th: "วันนี้ 08:12",
+    en: "Today 08:12"
+  },
+  rssi: -50,
+  qr: "QR-MC5010"
+}, {
+  id: 14,
+  code: "MC-5011",
+  cat: 3,
+  name: {
+    th: "หุ่นยนต์เชื่อม Fanuc ARC Mate",
+    en: "Fanuc ARC Mate welding robot"
+  },
+  epc: "3034 F4E9 8A21 0C4B AA50 11",
+  status: "ok",
+  home: "PL2-A",
+  room: {
+    th: "สถานี 5",
+    en: "Station 5"
+  },
+  lastSeen: {
+    th: "วันนี้ 07:55",
+    en: "Today 07:55"
+  },
+  rssi: -43,
+  qr: "QR-MC5011"
+}, {
+  id: 15,
+  code: "TL-3320",
+  cat: 4,
+  name: {
+    th: "รถลากไฟฟ้า EP-2",
+    en: "Electric pallet truck EP-2"
+  },
+  epc: "3034 F4E9 8A21 0C4B 9933 20",
+  status: "ok",
+  home: "PL2-A",
+  room: {
+    th: "คลังอะไหล่",
+    en: "Spare parts store"
+  },
+  lastSeen: {
+    th: "วันนี้ 06:40",
+    en: "Today 06:40"
+  },
+  rssi: -57,
+  qr: "QR-TL3320"
+}];
+const CATS = [{
+  id: 0,
+  th: "ทั้งหมด",
+  en: "All"
+}, {
+  id: 1,
+  th: "IT / คอมพิวเตอร์",
+  en: "IT / Computers"
+}, {
+  id: 2,
+  th: "เฟอร์นิเจอร์สำนักงาน",
+  en: "Office furniture"
+}, {
+  id: 3,
+  th: "เครื่องจักรโรงงาน",
+  en: "Factory machines"
+}, {
+  id: 4,
+  th: "เครื่องมือช่าง",
+  en: "Tools"
+}];
+const SITES = {
+  "HQ-3F": {
+    th: "HQ · อาคาร A · 3F",
+    en: "HQ · Building A · 3F"
+  },
+  "PL2-A": {
+    th: "โรงงาน 2 · ไลน์ประกอบ A",
+    en: "Plant 2 · Assembly line A"
+  }
+};
+const STATUS = {
+  ok: {
+    cls: "ok",
+    th: "ใช้งานปกติ",
+    en: "In service"
+  },
+  maint: {
+    cls: "warn",
+    th: "รอซ่อม",
+    en: "Needs repair"
+  },
+  missing: {
+    cls: "danger",
+    th: "สืบค้น",
+    en: "Investigating"
+  },
+  checked: {
+    cls: "info",
+    th: "ยืมออก",
+    en: "Checked out"
+  }
+};
+const DICT = {
+  th: {
+    dateLong: "16 ก.ย. 2569",
+    weekLine: "สัปดาห์ที่ 38",
+    greeting: "สวัสดีตอนเช้า",
+    userName: "อเนก ท.",
+    userRole: "ผู้ดูแลทรัพย์สิน IT",
+    statTotal: "ทรัพย์สินทั้งหมด",
+    statMissing: "ยังไม่พบ",
+    statOpen: "รอบตรวจค้าง",
+    quickActions: "ทางลัด",
+    qaCount: "นับรอบ",
+    qaRegister: "ลงทะเบียน",
+    qaFind: "ค้นหาแท็ก",
+    openSessions: "รอบตรวจที่เปิดอยู่",
+    s1Title: "Q3 · สำนักงานใหญ่ ชั้น 3",
+    s1Sub: "ครบกำหนด 30 ก.ย. · ผู้ตรวจ: คุณอเนก",
+    inProgress: "กำลังทำ",
+    s2Title: "Q3 · โรงงาน 2 · ไลน์ประกอบ A",
+    s2Sub: "เครื่องจักร 86 ชิ้น · ยังไม่เริ่ม",
+    notStarted: "รอเริ่ม",
+    needsAttention: "ต้องดูด่วน",
+    registryTitle: "ทะเบียนทรัพย์สิน",
+    searchPlaceholder: "ชื่อ · รหัส · EPC · QR",
+    noResults: "ไม่พบทรัพย์สินที่ตรงกับคำค้น",
+    back: "กลับ",
+    photoHint: "ภาพทรัพย์สิน — กดค้างเพื่ออัปโหลด",
+    qrFallback: "QR สำรอง",
+    maintHistory: "ประวัติซ่อมบำรุง",
+    manageAsset: "จัดการทรัพย์สิน",
+    locate: "ค้นหาแท็ก",
+    exit: "ออก",
+    kFound: "พบแล้ว",
+    kMissing: "ยังไม่พบ",
+    kStray: "ผิดที่",
+    lastRead: "อ่านล่าสุด",
+    clear: "ล้าง",
+    summary: "สรุป",
+    auditTitle: "กระทบยอดรอบตรวจ",
+    tabFound: "พบแล้ว",
+    tabMissing: "ยังไม่พบ",
+    tabStray: "ผิดที่",
+    auditEmpty: "ไม่มีรายการในกลุ่มนี้",
+    submitAudit: "ส่งผลการตรวจนับ",
+    auditFootnote: "ส่งแล้วระบบจะตั้งสถานะรายการที่ยังไม่พบเป็น “สืบค้น” และย้ายรายการผิดที่ไปยังผังจริงอัตโนมัติ",
+    actInvestigate: "สืบค้น",
+    actMove: "ย้ายเข้าผัง",
+    actView: "ดู",
+    regTitle: "ลงทะเบียน + เขียนแท็ก",
+    takePhoto: "ถ่ายรูปทรัพย์สิน",
+    fName: "ชื่อทรัพย์สิน",
+    fNamePh: "เช่น MacBook Pro 14 / เครื่องปั๊มไฮดรอลิก",
+    fCat: "หมวด",
+    fCC: "ศูนย์ต้นทุน",
+    fLoc: "ที่ตั้ง",
+    fLocValue: "HQ · อาคาร A · 3F · ห้อง 304",
+    writeTitle: "แตะแท็กเปล่ากับด้านหลังเครื่อง",
+    writeSub: "ระบบจะเขียน EPC ใหม่และล็อก memory bank ให้อ่านได้เท่านั้น",
+    doneTitle: "เขียนแท็กสำเร็จ",
+    regNextItem: "ลงทะเบียนชิ้นต่อไป",
+    finish: "เสร็จสิ้น",
+    ctaNext: "ถัดไป — เขียนแท็ก",
+    ctaConfirm: "ยืนยันการเขียนแท็ก",
+    moreTitle: "เมนูอื่น",
+    moreSub: "อเนก ท. · ผู้ดูแลทรัพย์สิน IT · TOMAS TECH",
+    connTitle: "สถานะเชื่อมต่อ",
+    connBody: "เครื่องอ่าน UHF · Zebra RFD40 · แบต 82%\nซิงก์ล่าสุด 1 นาทีที่แล้ว · ค้างส่ง 0 รายการ",
+    close: "ปิด",
+    matchPlan: "ตรงผัง",
+    outOfPlace: "ผิดที่",
+    nHome: "หน้าแรก",
+    nRegistry: "ทะเบียน",
+    nAudit: "กระทบยอด",
+    nMore: "อื่นๆ",
+    crHome: "สำนักงานใหญ่ · IT & Facilities",
+    crAssets: "ทะเบียนทรัพย์สิน 4,128 ชิ้น",
+    crScan: "กำลังตรวจนับ",
+    crAudit: "กระทบยอด",
+    crRegister: "ลงทะเบียนใหม่",
+    crMore: "ตั้งค่า & รายงาน",
+    mkLocPlan: "ที่ตั้งตามผัง",
+    mkLastRead: "อ่านล่าสุด",
+    mkOwner: "ผู้ดูแล",
+    mkCC: "ศูนย์ต้นทุน",
+    ownerVal: "ฝ่าย IT · คุณอเนก",
+    syncDone: "ซิงก์แล้ว · 4,128 รายการ · 0 ค้างส่ง",
+    pieces: " ชิ้น"
+  },
+  en: {
+    dateLong: "16 Sep 2026",
+    weekLine: "Week 38",
+    greeting: "Good morning",
+    userName: "Anek T.",
+    userRole: "IT Asset Admin",
+    statTotal: "Total assets",
+    statMissing: "Not yet found",
+    statOpen: "Open sessions",
+    quickActions: "Quick actions",
+    qaCount: "Cycle count",
+    qaRegister: "Register",
+    qaFind: "Find a tag",
+    openSessions: "Open count sessions",
+    s1Title: "Q3 · HQ Floor 3",
+    s1Sub: "Due 30 Sep · Auditor: Anek",
+    inProgress: "In progress",
+    s2Title: "Q3 · Plant 2 · Assembly A",
+    s2Sub: "86 machines · not started",
+    notStarted: "Not started",
+    needsAttention: "Needs attention",
+    registryTitle: "Asset registry",
+    searchPlaceholder: "Name · code · EPC · QR",
+    noResults: "No assets match that search",
+    back: "Back",
+    photoHint: "Asset photo — press and hold to upload",
+    qrFallback: "QR fallback",
+    maintHistory: "Maintenance history",
+    manageAsset: "Manage asset",
+    locate: "Locate",
+    exit: "Exit",
+    kFound: "Found",
+    kMissing: "Missing",
+    kStray: "Out of place",
+    lastRead: "Latest reads",
+    clear: "Clear",
+    summary: "Wrap up",
+    auditTitle: "Session reconciliation",
+    tabFound: "Found",
+    tabMissing: "Missing",
+    tabStray: "Stray",
+    auditEmpty: "Nothing in this group",
+    submitAudit: "Submit count results",
+    auditFootnote: "On submit, missing items are flagged “Investigating” and stray items are re-homed to where they were actually read.",
+    actInvestigate: "Investigate",
+    actMove: "Re-home",
+    actView: "View",
+    regTitle: "Register + write tag",
+    takePhoto: "Take asset photo",
+    fName: "Asset name",
+    fNamePh: "e.g. MacBook Pro 14 / Hydraulic press",
+    fCat: "Category",
+    fCC: "Cost center",
+    fLoc: "Location",
+    fLocValue: "HQ · Building A · 3F · Room 304",
+    writeTitle: "Hold a blank tag to the back of the device",
+    writeSub: "A fresh EPC is written, then the memory bank is locked read-only.",
+    doneTitle: "Tag written",
+    regNextItem: "Register next item",
+    finish: "Done",
+    ctaNext: "Next — write the tag",
+    ctaConfirm: "Confirm tag write",
+    moreTitle: "More",
+    moreSub: "Anek T. · IT Asset Admin · TOMAS TECH",
+    connTitle: "Hardware status",
+    connBody: "UHF reader · Zebra RFD40 · battery 82%\nLast sync 1 min ago · 0 records queued",
+    close: "Close",
+    matchPlan: "On plan",
+    outOfPlace: "Out of place",
+    nHome: "Home",
+    nRegistry: "Registry",
+    nAudit: "Reconcile",
+    nMore: "More",
+    crHome: "Head office · IT & Facilities",
+    crAssets: "4,128 assets on register",
+    crScan: "Counting in progress",
+    crAudit: "Reconciliation",
+    crRegister: "New registration",
+    crMore: "Settings & reports",
+    mkLocPlan: "Planned location",
+    mkLastRead: "Last read",
+    mkOwner: "Owner",
+    mkCC: "Cost center",
+    ownerVal: "IT dept · Anek T.",
+    syncDone: "Synced · 4,128 records · 0 queued",
+    pieces: " assets"
+  }
+};
+const HIST = {
+  th: [{
+    d: "12",
+    m: "ก.ย.",
+    title: "เปลี่ยนแบตเตอรี่สำรอง",
+    by: "ช่างสมชาย · ใบงาน WO-2291"
+  }, {
+    d: "28",
+    m: "ส.ค.",
+    title: "ตรวจเช็คประจำไตรมาส — ผ่าน",
+    by: "ทีมซ่อมบำรุง"
+  }, {
+    d: "04",
+    m: "ก.ค.",
+    title: "ย้ายจากชั้น 2 → ชั้น 3",
+    by: "คุณอเนก · สแกนยืนยัน"
+  }],
+  en: [{
+    d: "12",
+    m: "Sep",
+    title: "Backup battery replaced",
+    by: "Somchai · work order WO-2291"
+  }, {
+    d: "28",
+    m: "Aug",
+    title: "Quarterly inspection — passed",
+    by: "Maintenance team"
+  }, {
+    d: "04",
+    m: "Jul",
+    title: "Moved Floor 2 → Floor 3",
+    by: "Anek T. · scan confirmed"
+  }]
+};
+const SHEET = {
+  th: [{
+    k: "out",
+    label: "เบิก / ยืมออก",
+    sub: "ผูกกับพนักงานหรือหน่วยงาน",
+    toast: "ยืมออกให้ คุณสมหญิง · ครบกำหนด 30 ก.ย."
+  }, {
+    k: "in",
+    label: "คืนเข้าที่",
+    sub: "สแกนยืนยันตำแหน่งเดิม",
+    toast: "คืนเข้าที่เรียบร้อย"
+  }, {
+    k: "move",
+    label: "ย้ายที่ตั้ง",
+    sub: "สแกนแท็กตำแหน่งปลายทาง",
+    toast: "สแกนแท็กตำแหน่งปลายทางเพื่อยืนยันการย้าย"
+  }, {
+    k: "fault",
+    label: "แจ้งชำรุด / ขอซ่อม",
+    sub: "แนบรูปและอาการเสีย",
+    toast: "สร้างใบแจ้งซ่อม WO-2304 แล้ว"
+  }, {
+    k: "print",
+    label: "พิมพ์สติกเกอร์ QR สำรอง",
+    sub: "ใช้เมื่อแท็ก RFID เสียหาย",
+    toast: "ส่งงานพิมพ์ไปที่ Zebra ZD421"
+  }],
+  en: [{
+    k: "out",
+    label: "Check out",
+    sub: "Assign to a person or department",
+    toast: "Checked out to Somying · due 30 Sep"
+  }, {
+    k: "in",
+    label: "Check in",
+    sub: "Scan to confirm it is back on plan",
+    toast: "Checked back in"
+  }, {
+    k: "move",
+    label: "Move location",
+    sub: "Scan the destination location tag",
+    toast: "Scan the destination tag to confirm the move"
+  }, {
+    k: "fault",
+    label: "Report fault / request repair",
+    sub: "Attach a photo and symptoms",
+    toast: "Work order WO-2304 created"
+  }, {
+    k: "print",
+    label: "Print QR fallback label",
+    sub: "For when the RFID tag is damaged",
+    toast: "Print job sent to Zebra ZD421"
+  }]
+};
+const SHEETSTYLE = {
+  out: {
+    glyph: "↗",
+    grad: "linear-gradient(135deg,#fb923c,#e8720c)"
+  },
+  in: {
+    glyph: "↙",
+    grad: "linear-gradient(135deg,#4ade80,#22c55e)"
+  },
+  move: {
+    glyph: "⇄",
+    grad: "linear-gradient(135deg,#38bdf8,#0284c7)"
+  },
+  fault: {
+    glyph: "!",
+    grad: "linear-gradient(135deg,#f87171,#ef4444)"
+  },
+  print: {
+    glyph: "▤",
+    grad: "linear-gradient(135deg,#6b7280,#374151)"
+  }
+};
+const MORE = {
+  th: [{
+    g: "▦",
+    label: "รอบตรวจนับทั้งหมด",
+    sub: "เปิด 2 รอบ · ปิดแล้ว 11 รอบ",
+    go: "audit"
+  }, {
+    g: "⌖",
+    label: "ผังตำแหน่ง & แท็กประตู",
+    sub: "ไซต์ → อาคาร → ชั้น → ห้อง",
+    toast: "ผังตำแหน่ง: 4 ไซต์ · 62 โซน"
+  }, {
+    g: "⚒",
+    label: "ใบแจ้งซ่อม",
+    sub: "เปิดอยู่ 5 ใบ · เกินกำหนด 1 ใบ",
+    toast: "ใบแจ้งซ่อม WO-2291, WO-2304 …"
+  }, {
+    g: "▤",
+    label: "พิมพ์แท็ก & สติกเกอร์",
+    sub: "Zebra ZD421 · เชื่อมต่อแล้ว",
+    toast: "คิวพิมพ์ว่าง"
+  }, {
+    g: "◷",
+    label: "รายงานสำหรับผู้บริหาร",
+    sub: "อัตราพบ · มูลค่าสูญหาย · อายุสินทรัพย์",
+    toast: "อัตราพบรวม 97.2% ในไตรมาสนี้"
+  }, {
+    g: "⚙",
+    label: "ตั้งค่าเครื่องอ่าน",
+    sub: "กำลังส่ง · ช่วงความถี่ · เสียงบี๊บ",
+    toast: "กำลังส่ง 27 dBm · โซน TH 920–925 MHz"
+  }],
+  en: [{
+    g: "▦",
+    label: "All count sessions",
+    sub: "2 open · 11 closed",
+    go: "audit"
+  }, {
+    g: "⌖",
+    label: "Location plan & door tags",
+    sub: "Site → building → floor → room",
+    toast: "Location plan: 4 sites · 62 zones"
+  }, {
+    g: "⚒",
+    label: "Work orders",
+    sub: "5 open · 1 overdue",
+    toast: "Work orders WO-2291, WO-2304 …"
+  }, {
+    g: "▤",
+    label: "Print tags & labels",
+    sub: "Zebra ZD421 · connected",
+    toast: "Print queue is clear"
+  }, {
+    g: "◷",
+    label: "Management reports",
+    sub: "Find rate · loss value · asset age",
+    toast: "Overall find rate 97.2% this quarter"
+  }, {
+    g: "⚙",
+    label: "Reader settings",
+    sub: "Power · frequency band · beep",
+    toast: "27 dBm · TH band 920–925 MHz"
+  }]
+};
+function IconAntenna({
+  size = 18,
+  color = "#e8720c",
+  dot = 2.4
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 24 24",
+    width: size,
+    height: size,
+    fill: "none",
+    stroke: color,
+    strokeWidth: "2",
+    strokeLinecap: "round"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M4 8a12 12 0 0 1 0 8M8 6a16 16 0 0 1 0 12M20 8a12 12 0 0 0 0 8M16 6a16 16 0 0 0 0 12"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: dot,
+    fill: color,
+    stroke: "none"
+  }));
+}
+function IconSync({
+  size = 15,
+  color = "currentColor"
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 24 24",
+    width: size,
+    height: size,
+    fill: "none",
+    stroke: color,
+    strokeWidth: "2.2",
+    strokeLinecap: "round"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M21 12a9 9 0 1 1-3-6.7"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "21 4 21 10 15 10"
+  }));
+}
+function IconScanCorners({
+  size = 22,
+  color = "#e8720c"
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 24 24",
+    width: size,
+    height: size,
+    fill: "none",
+    stroke: color,
+    strokeWidth: "2",
+    strokeLinecap: "round"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "7",
+    y1: "12",
+    x2: "17",
+    y2: "12"
+  }));
+}
+function IconRegisterBox({
+  size = 23,
+  color = "#e8720c"
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 24 24",
+    width: size,
+    height: size,
+    fill: "none",
+    stroke: color,
+    strokeWidth: "2",
+    strokeLinecap: "round"
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "3",
+    y: "7",
+    width: "18",
+    height: "12",
+    rx: "2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M7 11v4M10.5 11v4M14 11v4"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "18",
+    y1: "3",
+    x2: "18",
+    y2: "5.4"
+  }));
+}
+function IconSearch({
+  size = 17,
+  color = "#6b7280"
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 24 24",
+    width: size,
+    height: size,
+    fill: "none",
+    stroke: color,
+    strokeWidth: "2",
+    strokeLinecap: "round"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "11",
+    cy: "11",
+    r: "8"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "21",
+    y1: "21",
+    x2: "16.65",
+    y2: "16.65"
+  }));
+}
+function IconCamera({
+  size = 30,
+  color = "currentColor"
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 24 24",
+    width: size,
+    height: size,
+    fill: "none",
+    stroke: color,
+    strokeWidth: "1.6"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "13",
+    r: "4"
+  }));
+}
+function IconCheck({
+  size = 30,
+  color = "#22c55e"
+}) {
+  return /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 24 24",
+    width: size,
+    height: size,
+    fill: "none",
+    stroke: color,
+    strokeWidth: "2.6",
+    strokeLinecap: "round"
+  }, /*#__PURE__*/React.createElement("polyline", {
+    points: "20 6 9 17 4 12"
+  }));
+}
+function glyphFor(a) {
+  return {
+    1: "IT",
+    2: "FN",
+    3: "MC",
+    4: "TL"
+  }[a.cat];
+}
+function locOf(a, lg) {
+  return SITES[a.home][lg] + " · " + a.room[lg];
+}
+function expectedFor(loc) {
+  return ASSETS.filter(a => a.home === loc);
+}
+function poolFor(loc) {
+  const exp = expectedFor(loc).filter(a => a.status !== "missing");
+  const strays = ASSETS.filter(a => a.home !== loc).slice(0, 2);
+  return loc === "HQ-3F" ? exp.concat(strays) : exp;
+}
+function App() {
+  const [lang, setLangState] = useState(() => {
+    try {
+      return localStorage.getItem("construct_lang") || "th";
+    } catch (e) {
+      return "th";
+    }
+  });
+  const [screen, setScreen] = useState("home");
+  const [prevScreen, setPrevScreen] = useState("home");
+  const [selId, setSelId] = useState(1);
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState(0);
+  const [found, setFound] = useState([]);
+  const [holding, setHolding] = useState(false);
+  const [tab, setTab] = useState("found");
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+  const [syncNote, setSyncNote] = useState("");
+  const [regStep, setRegStep] = useState(1);
+  const [regName, setRegName] = useState("");
+  const [scanLoc, setScanLoc] = useState("HQ-3F");
+  const foundRef = useRef(found);
+  useEffect(() => {
+    foundRef.current = found;
+  }, [found]);
+  const holdIntervalRef = useRef(null);
+  const toastTimeoutRef = useRef(null);
+  const syncTimeoutRef = useRef(null);
+  useEffect(() => () => {
+    clearInterval(holdIntervalRef.current);
+    clearTimeout(toastTimeoutRef.current);
+    clearTimeout(syncTimeoutRef.current);
+  }, []);
+  const th = lang === "th";
+  const D = DICT[lang];
+  function setLang(l) {
+    setLangState(l);
+    try {
+      localStorage.setItem("construct_lang", l);
+    } catch (e) {}
+  }
+  function go(s) {
+    setPrevScreen(screen === "detail" ? prevScreen : screen);
+    setSheetOpen(false);
+    setScreen(s);
+  }
+  function back() {
+    setScreen(prevScreen || "home");
+    setSheetOpen(false);
+  }
+  function openDetail(id) {
+    setPrevScreen(screen);
+    setSelId(id);
+    setScreen("detail");
+  }
+  function toast(m) {
+    setToastMsg(m);
+    clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setToastMsg(""), 2400);
+  }
+  function toggleSync() {
+    setSyncNote(D.syncDone);
+    clearTimeout(syncTimeoutRef.current);
+    syncTimeoutRef.current = setTimeout(() => setSyncNote(""), 2600);
+  }
+  function goScanPlant() {
+    setPrevScreen("home");
+    setScanLoc("PL2-A");
+    setFound([]);
+    foundRef.current = [];
+    setScreen("scan");
+  }
+  function goRegister() {
+    setPrevScreen("home");
+    setRegStep(1);
+    setRegName("");
+    setScreen("register");
+  }
+  function holdStart() {
+    if (holdIntervalRef.current) return;
+    setHolding(true);
+    const loc = scanLoc;
+    holdIntervalRef.current = setInterval(() => {
+      const pool = poolFor(loc);
+      const rest = pool.filter(a => foundRef.current.indexOf(a.id) < 0);
+      if (!rest.length) {
+        clearInterval(holdIntervalRef.current);
+        holdIntervalRef.current = null;
+        setHolding(false);
+        return;
+      }
+      const pick = rest[Math.floor(Math.random() * rest.length)];
+      setFound(f => {
+        const nf = f.concat(pick.id);
+        foundRef.current = nf;
+        return nf;
+      });
+    }, 260);
+  }
+  function holdEnd() {
+    clearInterval(holdIntervalRef.current);
+    holdIntervalRef.current = null;
+    setHolding(false);
+  }
+  function resetScan() {
+    setFound([]);
+    foundRef.current = [];
+  }
+  const exp = expectedFor(scanLoc);
+  const foundAssets = found.map(id => ASSETS.find(a => a.id === id)).filter(Boolean);
+  const foundExpected = foundAssets.filter(a => a.home === scanLoc);
+  const strays = foundAssets.filter(a => a.home !== scanLoc);
+  const missing = exp.filter(a => found.indexOf(a.id) < 0);
+  const pct = exp.length ? Math.round(foundExpected.length / exp.length * 100) : 0;
+  const sel = ASSETS.find(a => a.id === selId) || ASSETS[0];
+  const qNorm = q.trim().toLowerCase();
+  const list = ASSETS.filter(a => (cat === 0 || a.cat === cat) && (!qNorm || (a.name.th + a.name.en + a.code + a.epc + a.qr).toLowerCase().indexOf(qNorm) >= 0));
+  const rowsFor = {
+    found: foundExpected,
+    missing: missing,
+    stray: strays
+  }[tab] || [];
+  const alertSrc = [ASSETS[5], ASSETS[12], ASSETS[11]];
+  const pieces = D.pieces;
+  const crumb = {
+    home: D.crHome,
+    assets: D.crAssets,
+    detail: sel.code,
+    scan: D.crScan,
+    audit: D.crAudit,
+    register: D.crRegister,
+    more: D.crMore
+  }[screen] || "";
+  return /*#__PURE__*/React.createElement("div", {
+    className: "app"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "top"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "logo"
+  }, /*#__PURE__*/React.createElement(IconAntenna, {
+    size: 18,
+    color: "#e8720c"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "tt"
+  }, /*#__PURE__*/React.createElement("b", null, "RFID Asset Control"), /*#__PURE__*/React.createElement("span", null, crumb)), /*#__PURE__*/React.createElement("button", {
+    className: "topsync",
+    onClick: toggleSync
+  }, /*#__PURE__*/React.createElement(IconSync, null)), /*#__PURE__*/React.createElement("div", {
+    className: "lang"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: th ? "on" : "",
+    onClick: () => setLang("th")
+  }, "TH"), /*#__PURE__*/React.createElement("button", {
+    className: !th ? "on" : "",
+    onClick: () => setLang("en")
+  }, "EN"))), syncNote && /*#__PURE__*/React.createElement("div", {
+    className: "syncnote"
+  }, /*#__PURE__*/React.createElement("i", null), syncNote), /*#__PURE__*/React.createElement("main", {
+    className: screen === "scan" ? "scan-main" : undefined
+  }, screen === "home" && /*#__PURE__*/React.createElement("div", {
+    className: "screen",
+    style: {
+      padding: "0 16px 110px"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "hero"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "hero-date"
+  }, D.dateLong, /*#__PURE__*/React.createElement("br", null), D.weekLine), /*#__PURE__*/React.createElement("div", {
+    className: "hero-greet"
+  }, D.greeting), /*#__PURE__*/React.createElement("div", {
+    className: "hero-name"
+  }, D.userName, " ", /*#__PURE__*/React.createElement("span", null, "\xB7 ", D.userRole)), /*#__PURE__*/React.createElement("div", {
+    className: "hero-stats"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "hstat",
+    onClick: () => go("assets")
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "hv"
+  }, "4,128"), /*#__PURE__*/React.createElement("div", {
+    className: "hl"
+  }, D.statTotal)), /*#__PURE__*/React.createElement("button", {
+    className: "hstat",
+    onClick: () => go("audit")
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "hv warn"
+  }, "23"), /*#__PURE__*/React.createElement("div", {
+    className: "hl"
+  }, D.statMissing)), /*#__PURE__*/React.createElement("button", {
+    className: "hstat",
+    onClick: () => go("audit")
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "hv"
+  }, "2"), /*#__PURE__*/React.createElement("div", {
+    className: "hl"
+  }, D.statOpen)))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: "14px 0 0"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "sec-t",
+    style: {
+      marginTop: 6
+    }
+  }, D.quickActions), /*#__PURE__*/React.createElement("div", {
+    className: "qa"
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => go("scan")
+  }, /*#__PURE__*/React.createElement(IconScanCorners, {
+    size: 23
+  }), /*#__PURE__*/React.createElement("span", null, D.qaCount)), /*#__PURE__*/React.createElement("button", {
+    onClick: goRegister
+  }, /*#__PURE__*/React.createElement(IconRegisterBox, {
+    size: 23
+  }), /*#__PURE__*/React.createElement("span", null, D.qaRegister)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => go("assets")
+  }, /*#__PURE__*/React.createElement(IconSearch, {
+    size: 23,
+    color: "#e8720c"
+  }), /*#__PURE__*/React.createElement("span", null, D.qaFind))), /*#__PURE__*/React.createElement("div", {
+    className: "sec-t"
+  }, D.openSessions), /*#__PURE__*/React.createElement("button", {
+    className: "card",
+    style: {
+      width: "100%",
+      textAlign: "left",
+      padding: "15px 16px",
+      display: "block"
+    },
+    onClick: () => go("scan")
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("b", {
+    style: {
+      font: "800 14.5px Sarabun,sans-serif",
+      display: "block"
+    }
+  }, D.s1Title), /*#__PURE__*/React.createElement("small", {
+    style: {
+      color: "var(--sub)"
+    }
+  }, D.s1Sub)), /*#__PURE__*/React.createElement("span", {
+    className: "pill warn"
+  }, /*#__PURE__*/React.createElement("i", null), D.inProgress)), /*#__PURE__*/React.createElement("div", {
+    className: "progress"
+  }, /*#__PURE__*/React.createElement("i", {
+    style: {
+      width: pct + "%"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      fontSize: 11.5,
+      fontWeight: 600,
+      color: "var(--sub)",
+      marginTop: 7
+    }
+  }, /*#__PURE__*/React.createElement("span", null, foundExpected.length + " / " + exp.length + pieces), /*#__PURE__*/React.createElement("span", null, pct, "%"))), /*#__PURE__*/React.createElement("button", {
+    className: "card",
+    style: {
+      width: "100%",
+      textAlign: "left",
+      padding: "15px 16px",
+      marginTop: 10,
+      display: "flex",
+      alignItems: "center",
+      gap: 10
+    },
+    onClick: goScanPlant
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("b", {
+    style: {
+      font: "800 14.5px Sarabun,sans-serif",
+      display: "block"
+    }
+  }, D.s2Title), /*#__PURE__*/React.createElement("small", {
+    style: {
+      color: "var(--sub)"
+    }
+  }, D.s2Sub)), /*#__PURE__*/React.createElement("span", {
+    className: "pill ng"
+  }, /*#__PURE__*/React.createElement("i", null), D.notStarted)), /*#__PURE__*/React.createElement("div", {
+    className: "sec-t"
+  }, D.needsAttention), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      overflow: "hidden"
+    }
+  }, alertSrc.map(a => {
+    const s = STATUS[a.status];
+    return /*#__PURE__*/React.createElement("button", {
+      key: a.id,
+      className: "row",
+      onClick: () => openDetail(a.id)
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "thumb pill " + s.cls,
+      style: {
+        borderRadius: 11
+      }
+    }, glyphFor(a)), /*#__PURE__*/React.createElement("div", {
+      className: "rt"
+    }, /*#__PURE__*/React.createElement("b", null, a.name[lang]), /*#__PURE__*/React.createElement("small", null, (th ? "เห็นล่าสุด " : "last read ") + a.lastSeen[lang] + " · " + a.room[lang])), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--sub2)",
+        fontWeight: 800
+      }
+    }, "\u203A"));
+  })))), screen === "assets" && /*#__PURE__*/React.createElement("div", {
+    className: "screen"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h1"
+  }, D.registryTitle), /*#__PURE__*/React.createElement("div", {
+    className: "sub"
+  }, list.length + (th ? " รายการที่ตรงเงื่อนไข · แตะเพื่อดูรายละเอียด" : " matching records · tap for detail")), /*#__PURE__*/React.createElement("div", {
+    className: "search"
+  }, /*#__PURE__*/React.createElement(IconSearch, null), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    value: q,
+    onChange: e => setQ(e.target.value),
+    placeholder: D.searchPlaceholder
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "chips"
+  }, CATS.map(c => /*#__PURE__*/React.createElement("button", {
+    key: c.id,
+    className: cat === c.id ? "on" : "",
+    onClick: () => setCat(c.id)
+  }, c[lang]))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      overflow: "hidden"
+    }
+  }, list.map(a => {
+    const s = STATUS[a.status];
+    return /*#__PURE__*/React.createElement("button", {
+      key: a.id,
+      className: "row",
+      onClick: () => openDetail(a.id)
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "thumb ph"
+    }, glyphFor(a)), /*#__PURE__*/React.createElement("div", {
+      className: "rt"
+    }, /*#__PURE__*/React.createElement("b", null, a.name[lang]), /*#__PURE__*/React.createElement("small", {
+      style: {
+        fontFamily: "'JetBrains Mono',monospace",
+        color: "var(--sub2)"
+      }
+    }, a.code + " · " + a.qr), /*#__PURE__*/React.createElement("small", null, locOf(a, lang))), /*#__PURE__*/React.createElement("span", {
+      className: "pill " + s.cls
+    }, /*#__PURE__*/React.createElement("i", null), s[lang]));
+  }), list.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "empty"
+  }, D.noResults))), screen === "detail" && /*#__PURE__*/React.createElement("div", {
+    className: "screen"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "backbtn",
+    onClick: back
+  }, "\u2039 ", D.back), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "photo-ph"
+  }, /*#__PURE__*/React.createElement(IconCamera, null), /*#__PURE__*/React.createElement("span", null, D.photoHint)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      font: "900 19px/1.25 Sarabun,sans-serif"
+    }
+  }, sel.name[lang]), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontFamily: "'JetBrains Mono',monospace",
+      fontSize: 12,
+      color: "var(--sub2)",
+      marginTop: 3
+    }
+  }, sel.code), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: "var(--sub2)"
+    }
+  }, (CATS.find(c => c.id === sel.cat) || {})[lang])), /*#__PURE__*/React.createElement("span", {
+    className: "pill " + STATUS[sel.status].cls
+  }, /*#__PURE__*/React.createElement("i", null), STATUS[sel.status][lang])), /*#__PURE__*/React.createElement("div", {
+    className: "rfid-epc"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "lbl"
+  }, "RFID TAG \xB7 EPC (SGTIN-96)"), /*#__PURE__*/React.createElement("div", {
+    className: "val"
+  }, sel.epc), /*#__PURE__*/React.createElement("div", {
+    className: "rfid-rssi"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "track"
+  }, /*#__PURE__*/React.createElement("i", {
+    style: {
+      width: Math.max(8, Math.min(100, (90 + sel.rssi) * 2.6)) + "%"
+    }
+  })), /*#__PURE__*/React.createElement("span", {
+    className: "val"
+  }, sel.rssi, " dBm")), /*#__PURE__*/React.createElement("div", {
+    className: "rfid-qr"
+  }, D.qrFallback, ": ", sel.qr)), /*#__PURE__*/React.createElement("div", {
+    className: "rfid-meta"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "k"
+  }, D.mkLocPlan), /*#__PURE__*/React.createElement("div", {
+    className: "v"
+  }, locOf(sel, lang))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "k"
+  }, D.mkLastRead), /*#__PURE__*/React.createElement("div", {
+    className: "v"
+  }, sel.lastSeen[lang])), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "k"
+  }, D.mkOwner), /*#__PURE__*/React.createElement("div", {
+    className: "v"
+  }, D.ownerVal)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "k"
+  }, D.mkCC), /*#__PURE__*/React.createElement("div", {
+    className: "v"
+  }, "CC-1100 \xB7 IT"))))), /*#__PURE__*/React.createElement("div", {
+    className: "sec-t"
+  }, D.maintHistory), /*#__PURE__*/React.createElement("div", {
+    className: "rfid-timeline"
+  }, HIST[lang].map((h, i) => /*#__PURE__*/React.createElement("div", {
+    className: "rfid-tl-row",
+    key: i
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "rfid-tl-date"
+  }, /*#__PURE__*/React.createElement("b", null, h.d), /*#__PURE__*/React.createElement("span", null, h.m)), /*#__PURE__*/React.createElement("div", {
+    className: "rfid-tl-bar"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "rfid-tl-body"
+  }, /*#__PURE__*/React.createElement("b", null, h.title), /*#__PURE__*/React.createElement("small", null, h.by))))), /*#__PURE__*/React.createElement("div", {
+    className: "rfid-actions"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn primary",
+    onClick: () => setSheetOpen(true)
+  }, D.manageAsset), /*#__PURE__*/React.createElement("button", {
+    className: "btn ghost",
+    onClick: () => toast(th ? "กำลังค้นหาแท็ก " + sel.code + " — เดินไปทางที่เสียงถี่ขึ้น" : "Locating " + sel.code + " — walk toward the faster beep")
+  }, D.locate))), screen === "scan" && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "scan-top"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "exit",
+    onClick: back
+  }, "\u2039 ", D.exit), /*#__PURE__*/React.createElement("div", {
+    className: "mid"
+  }, /*#__PURE__*/React.createElement("b", null, SITES[scanLoc][lang]), /*#__PURE__*/React.createElement("span", null, (th ? "คาดว่ามี " : "expecting ") + exp.filter(a => a.status !== "missing").length + pieces + " · Q3")), /*#__PURE__*/React.createElement("span", {
+    className: "badge"
+  }, "UHF GUN \xB7 RFD40")), /*#__PURE__*/React.createElement("div", {
+    className: "scan-hero"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "scan-hero-top"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "scan-hero-count"
+  }, foundExpected.length), /*#__PURE__*/React.createElement("div", {
+    className: "scan-hero-lbl"
+  }, /*#__PURE__*/React.createElement("b", null, "/ " + exp.filter(a => a.status !== "missing").length + (th ? " ชิ้นที่คาดว่าอยู่ที่นี่" : " expected here")), /*#__PURE__*/React.createElement("span", null, (th ? "อ่านซ้ำกรองแล้ว · " : "duplicates filtered · ") + foundAssets.length + (th ? " แท็กไม่ซ้ำ" : " unique tags")))), /*#__PURE__*/React.createElement("div", {
+    className: "scan-progress"
+  }, /*#__PURE__*/React.createElement("i", {
+    style: {
+      width: pct + "%"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "scan-kpis"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "scan-kpi",
+    style: {
+      background: "rgba(34,197,94,.13)",
+      border: "1px solid rgba(34,197,94,.3)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "v",
+    style: {
+      color: "#4ade80"
+    }
+  }, foundExpected.length), /*#__PURE__*/React.createElement("div", {
+    className: "l"
+  }, D.kFound)), /*#__PURE__*/React.createElement("div", {
+    className: "scan-kpi",
+    style: {
+      background: "rgba(245,158,11,.13)",
+      border: "1px solid rgba(245,158,11,.3)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "v",
+    style: {
+      color: "#f5a623"
+    }
+  }, missing.length), /*#__PURE__*/React.createElement("div", {
+    className: "l"
+  }, D.kMissing)), /*#__PURE__*/React.createElement("div", {
+    className: "scan-kpi",
+    style: {
+      background: "rgba(14,165,233,.13)",
+      border: "1px solid rgba(14,165,233,.3)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "v",
+    style: {
+      color: "#38bdf8"
+    }
+  }, strays.length), /*#__PURE__*/React.createElement("div", {
+    className: "l"
+  }, D.kStray)))), /*#__PURE__*/React.createElement("div", {
+    className: "scan-list"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "scan-list-t"
+  }, D.lastRead), foundAssets.slice().reverse().slice(0, 8).map(a => {
+    const stray = a.home !== scanLoc;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "stream-card",
+      key: a.id
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "thumb tint-" + (stray ? "info" : "ok"),
+      style: {
+        borderRadius: 10
+      }
+    }, glyphFor(a)), /*#__PURE__*/React.createElement("div", {
+      className: "stt"
+    }, /*#__PURE__*/React.createElement("b", null, a.name[lang]), /*#__PURE__*/React.createElement("small", null, "…" + a.epc.slice(-7))), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10.5,
+        fontWeight: 700,
+        color: stray ? "#38bdf8" : "#4ade80"
+      }
+    }, stray ? D.outOfPlace : D.matchPlan));
+  }), foundAssets.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "stream-empty"
+  }, th ? "กดปุ่มไกบนเครื่องอ่านค้างไว้\nแล้วกวาดไปรอบห้อง" : "Hold the reader trigger down\nand sweep the room")), /*#__PURE__*/React.createElement("div", {
+    className: "scan-foot"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "scan-clear",
+    onClick: resetScan
+  }, D.clear), /*#__PURE__*/React.createElement("button", {
+    className: "scan-trigger" + (holding ? " holding" : ""),
+    onMouseDown: holdStart,
+    onMouseUp: holdEnd,
+    onMouseLeave: holdEnd,
+    onTouchStart: holdStart,
+    onTouchEnd: holdEnd
+  }, /*#__PURE__*/React.createElement(IconAntenna, {
+    size: 22,
+    color: "#fff",
+    dot: 2
+  }), holding ? th ? "กำลังอ่าน…" : "Reading…" : th ? "กดค้างเพื่อสแกน" : "Hold to scan"), /*#__PURE__*/React.createElement("button", {
+    className: "scan-summary",
+    onClick: () => go("audit")
+  }, D.summary))), screen === "audit" && /*#__PURE__*/React.createElement("div", {
+    className: "screen"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h1"
+  }, D.auditTitle), /*#__PURE__*/React.createElement("div", {
+    className: "sub"
+  }, SITES[scanLoc][lang] + " · " + (th ? "16 ก.ย. 2569 09:24" : "16 Sep 2026 09:24")), /*#__PURE__*/React.createElement("div", {
+    className: "rfid-seg"
+  }, [["found", D.tabFound + " " + foundExpected.length], ["missing", D.tabMissing + " " + missing.length], ["stray", D.tabStray + " " + strays.length]].map(p => /*#__PURE__*/React.createElement("button", {
+    key: p[0],
+    className: tab === p[0] ? "on" : "",
+    onClick: () => setTab(p[0])
+  }, p[1]))), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      overflow: "hidden"
+    }
+  }, rowsFor.map(a => {
+    const stray = a.home !== scanLoc,
+      miss = found.indexOf(a.id) < 0 && a.home === scanLoc;
+    const tint = miss ? "danger" : stray ? "info" : "ok";
+    const actLabel = miss ? D.actInvestigate : stray ? D.actMove : D.actView;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "row",
+      key: a.id
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "thumb pill " + tint,
+      style: {
+        borderRadius: 11
+      }
+    }, glyphFor(a)), /*#__PURE__*/React.createElement("div", {
+      className: "rt"
+    }, /*#__PURE__*/React.createElement("b", null, a.name[lang]), /*#__PURE__*/React.createElement("small", null, miss ? (th ? "เห็นล่าสุด " : "last read ") + a.lastSeen[lang] + " · " + a.room[lang] : locOf(a, lang))), /*#__PURE__*/React.createElement("button", {
+      className: "btn ghost",
+      style: {
+        width: "auto",
+        padding: "8px 12px",
+        fontSize: 12
+      },
+      onClick: () => {
+        if (miss) toast(th ? "ตั้งสถานะ " + a.code + " เป็น “สืบค้น” และแจ้งผู้ดูแล" : a.code + " flagged “Investigating” — owner notified");else if (stray) toast(th ? "ย้าย " + a.code + " มาอยู่ในผังนี้แล้ว" : a.code + " re-homed to this location");else openDetail(a.id);
+      }
+    }, actLabel));
+  }), rowsFor.length === 0 && /*#__PURE__*/React.createElement("div", {
+    className: "empty"
+  }, D.auditEmpty)), /*#__PURE__*/React.createElement("button", {
+    className: "btn ok",
+    style: {
+      marginTop: 16
+    },
+    onClick: () => {
+      toast(th ? "ส่งผลรอบตรวจ Q3 เรียบร้อย" : "Q3 count results submitted");
+      go("home");
+    }
+  }, D.submitAudit), /*#__PURE__*/React.createElement("p", {
+    className: "footnote"
+  }, D.auditFootnote)), screen === "register" && /*#__PURE__*/React.createElement("div", {
+    className: "screen"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "backbtn",
+    onClick: back
+  }, "\u2039 ", D.back), /*#__PURE__*/React.createElement("div", {
+    className: "h1"
+  }, D.regTitle), /*#__PURE__*/React.createElement("div", {
+    className: "sub"
+  }, regStep + " / 3"), /*#__PURE__*/React.createElement("div", {
+    className: "reg-bars"
+  }, [1, 2, 3].map(i => /*#__PURE__*/React.createElement("i", {
+    key: i,
+    className: i <= regStep ? "on" : ""
+  }))), regStep === 1 && /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "photo-ph sm"
+  }, /*#__PURE__*/React.createElement(IconCamera, {
+    size: 26
+  }), /*#__PURE__*/React.createElement("span", null, D.takePhoto)), /*#__PURE__*/React.createElement("div", {
+    className: "field"
+  }, /*#__PURE__*/React.createElement("label", null, D.fName), /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    value: regName,
+    onChange: e => setRegName(e.target.value),
+    placeholder: D.fNamePh
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 10,
+      marginBottom: 13
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: "block",
+      fontSize: 12.5,
+      fontWeight: 700,
+      color: "var(--sub)",
+      marginBottom: 6
+    }
+  }, D.fCat), /*#__PURE__*/React.createElement("select", {
+    className: "inp"
+  }, CATS.filter(c => c.id !== 0).map(c => /*#__PURE__*/React.createElement("option", {
+    key: c.id
+  }, c[lang])))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: "block",
+      fontSize: 12.5,
+      fontWeight: 700,
+      color: "var(--sub)",
+      marginBottom: 6
+    }
+  }, D.fCC), /*#__PURE__*/React.createElement("select", {
+    className: "inp"
+  }, /*#__PURE__*/React.createElement("option", null, "CC-1100 \xB7 IT"), /*#__PURE__*/React.createElement("option", null, "CC-2200 \xB7 Production"), /*#__PURE__*/React.createElement("option", null, "CC-3300 \xB7 Admin")))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      display: "block",
+      fontSize: 12.5,
+      fontWeight: 700,
+      color: "var(--sub)",
+      marginBottom: 6
+    }
+  }, D.fLoc), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    className: "inp",
+    defaultValue: D.fLocValue,
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    className: "locscan"
+  }, /*#__PURE__*/React.createElement(IconScanCorners, {
+    size: 19,
+    color: "#fff"
+  }))))), regStep === 2 && /*#__PURE__*/React.createElement("div", {
+    className: "write-box"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "write-ic"
+  }, /*#__PURE__*/React.createElement(IconAntenna, {
+    size: 38,
+    color: "#f0872a",
+    dot: 2.2
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "ring"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "write-t"
+  }, D.writeTitle), /*#__PURE__*/React.createElement("div", {
+    className: "write-s"
+  }, D.writeSub), /*#__PURE__*/React.createElement("div", {
+    className: "write-epc"
+  }, "3034 F4E9 8A21 0C4B 7711 09")), regStep === 3 && /*#__PURE__*/React.createElement("div", {
+    className: "done-box"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "done-ic"
+  }, /*#__PURE__*/React.createElement(IconCheck, null)), /*#__PURE__*/React.createElement("div", {
+    className: "done-t"
+  }, D.doneTitle), /*#__PURE__*/React.createElement("div", {
+    className: "done-s"
+  }, regName || (th ? "ทรัพย์สินใหม่" : "New asset")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 16,
+      display: "flex",
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn ghost",
+    onClick: goRegister
+  }, D.regNextItem), /*#__PURE__*/React.createElement("button", {
+    className: "btn primary",
+    onClick: () => go("home")
+  }, D.finish))), regStep < 3 && /*#__PURE__*/React.createElement("button", {
+    className: "btn primary",
+    style: {
+      marginTop: 18
+    },
+    onClick: () => setRegStep(s => s + 1)
+  }, regStep === 1 ? D.ctaNext : D.ctaConfirm)), screen === "more" && /*#__PURE__*/React.createElement("div", {
+    className: "screen"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "h1"
+  }, D.moreTitle), /*#__PURE__*/React.createElement("div", {
+    className: "sub"
+  }, D.moreSub), /*#__PURE__*/React.createElement("div", {
+    className: "card",
+    style: {
+      overflow: "hidden"
+    }
+  }, MORE[lang].map((m, i) => /*#__PURE__*/React.createElement("button", {
+    key: i,
+    className: "more-row",
+    onClick: () => {
+      if (m.go) go(m.go);else toast(m.toast);
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "more-ic"
+  }, m.g), /*#__PURE__*/React.createElement("div", {
+    className: "rt"
+  }, /*#__PURE__*/React.createElement("b", null, m.label), /*#__PURE__*/React.createElement("small", null, m.sub)), /*#__PURE__*/React.createElement("span", {
+    className: "more-arrow"
+  }, "\u203A")))), /*#__PURE__*/React.createElement("div", {
+    className: "conn-box"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "t"
+  }, D.connTitle), /*#__PURE__*/React.createElement("div", {
+    className: "b"
+  }, D.connBody)))), /*#__PURE__*/React.createElement("div", {
+    className: "nav"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: screen === "home" ? "on" : "",
+    onClick: () => go("home")
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "glyph"
+  }, "\u2302"), D.nHome), /*#__PURE__*/React.createElement("button", {
+    className: screen === "assets" ? "on" : "",
+    onClick: () => go("assets")
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "glyph"
+  }, "\u25A6"), D.nRegistry), /*#__PURE__*/React.createElement("button", {
+    className: "scanbtn",
+    onClick: () => go("scan")
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "circle"
+  }, /*#__PURE__*/React.createElement(IconAntenna, {
+    size: 25,
+    color: "#fff",
+    dot: 2
+  }), /*#__PURE__*/React.createElement("span", null, "SCAN"))), /*#__PURE__*/React.createElement("button", {
+    className: screen === "audit" ? "on" : "",
+    onClick: () => go("audit")
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "glyph"
+  }, "\u2713"), D.nAudit), /*#__PURE__*/React.createElement("button", {
+    className: screen === "more" ? "on" : "",
+    onClick: () => go("more")
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "glyph"
+  }, "\u2630"), D.nMore)), sheetOpen && /*#__PURE__*/React.createElement("div", {
+    className: "sheet-ov",
+    onClick: () => setSheetOpen(false)
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "sheet",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "grab"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "sh-h"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "thumb ph"
+  }, glyphFor(sel)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("b", null, sel.name[lang]), /*#__PURE__*/React.createElement("small", null, sel.code))), /*#__PURE__*/React.createElement("div", {
+    className: "opts"
+  }, SHEET[lang].map(o => /*#__PURE__*/React.createElement("button", {
+    key: o.k,
+    className: "opt",
+    onClick: () => {
+      setSheetOpen(false);
+      toast(o.toast);
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "oi",
+    style: {
+      background: SHEETSTYLE[o.k].grad
+    }
+  }, SHEETSTYLE[o.k].glyph), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("b", null, o.label), /*#__PURE__*/React.createElement("small", null, o.sub))))), /*#__PURE__*/React.createElement("button", {
+    className: "btn ghost",
+    style: {
+      marginTop: 14
+    },
+    onClick: () => setSheetOpen(false)
+  }, D.close))), toastMsg && /*#__PURE__*/React.createElement("div", {
+    className: "toast"
+  }, toastMsg));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));</script>
+</body>
+</html>
